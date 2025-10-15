@@ -1,4 +1,4 @@
-const BASE_URL = process.env.REACT_APP_API_BASE_URL || '';
+const BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://vscode-internal-27850-beta.beta01.cloud.kavia.ai:3001';
 
 /**
  * Thin fetch wrapper providing JSON handling and error normalization
