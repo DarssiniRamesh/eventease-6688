@@ -10,6 +10,7 @@ import EventDetail from './components/EventDetail';
 import EventForm from './components/EventForm';
 import Modal from './components/Modal';
 import useEvents from './hooks/useEvents';
+import { loadJSON, saveJSON } from './utils/storage';
 
 // PUBLIC_INTERFACE
 function App() {
@@ -17,6 +18,7 @@ function App() {
    * App composes the layout with a left sidebar, a sticky header, and a main content area.
    * Implements simple hash-based routing: #/list, #/create, #/edit/:id, #/view/:id
    * Provides Ocean Professional theming and passes CRUD handlers via useEvents hook.
+   * Adds collapsible sidebar (persisted), and responsive mobile drawer behavior.
    */
   const [route, setRoute] = useState(window.location.hash.replace('#', '') || '/list');
   const [confirmState, setConfirmState] = useState({ open: false, id: null });
@@ -27,12 +29,33 @@ function App() {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
 
+  // Sidebar UI state persistence
+  const SIDEBAR_KEY = 'ee.sidebar.collapsed';
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => !!loadJSON(SIDEBAR_KEY, false));
+  useEffect(() => {
+    saveJSON(SIDEBAR_KEY, sidebarCollapsed);
+  }, [sidebarCollapsed]);
+
+  // Mobile drawer state
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Close drawer on route change for better UX
   useEffect(() => {
     const onHashChange = () => {
       setRoute(window.location.hash.replace('#', '') || '/list');
+      setMobileOpen(false);
     };
     window.addEventListener('hashchange', onHashChange);
     return () => window.removeEventListener('hashchange', onHashChange);
+  }, []);
+
+  // Global ESC key to close mobile drawer
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === 'Escape') setMobileOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
   }, []);
 
   const navigate = (path) => {
@@ -86,21 +109,48 @@ function App() {
 
   const currentEvent = id ? getEventById(id) : null;
 
+  // Handlers passed to children
+  const toggleSidebarCollapsed = () => setSidebarCollapsed((c) => !c);
+  const openMobile = () => setMobileOpen(true);
+  const closeMobile = () => setMobileOpen(false);
+
   return (
-    <div className="app-root">
+    <div
+      className={`app-root ${sidebarCollapsed ? 'is-collapsed' : 'is-expanded'} ${
+        mobileOpen ? 'drawer-open' : ''
+      }`}
+    >
       <Sidebar
+        id="app-sidebar"
         currentRoute={view}
         onNavigate={navigate}
         theme={theme}
         onToggleTheme={() => setTheme((t) => (t === 'light' ? 'dark' : 'light'))}
+        collapsed={sidebarCollapsed}
+        onToggleCollapsed={toggleSidebarCollapsed}
+        mobileOpen={mobileOpen}
+        onCloseMobile={closeMobile}
       />
+
+      {/* Backdrop for mobile drawer */}
+      <div
+        className={`sidebar-backdrop ${mobileOpen ? 'show' : ''}`}
+        aria-hidden={!mobileOpen}
+        onClick={closeMobile}
+      />
+
       <div className="main-area">
         <Header
           title="EventEase"
           subtitle="Plan, publish, and manage events with ease"
           onPrimaryAction={() => navigate('/create')}
+          // Hamburger toggles drawer on small screens
+          onToggleMenu={openMobile}
+          sidebarCollapsed={sidebarCollapsed}
+          // Optionally expose collapse toggle via header on desktop
+          onToggleSidebarCollapsed={toggleSidebarCollapsed}
         />
-        <main className="content-area">
+        <main className="content-area" tabIndex={-1}>
           {view === '/list' && (
             <EventList
               events={events}

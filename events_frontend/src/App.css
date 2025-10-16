@@ -7,6 +7,25 @@
 html, body, #root { height: 100%; }
 body { margin: 0; }
 
+/* Generic focus-visible ring */
+:where(button, a, input, select, textarea).focus-visible,
+:where(button, a, input, select, textarea):focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.28);
+}
+
+/* Utility icon button */
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  height: 34px;
+  padding: 0 8px;
+  border-radius: 10px;
+}
+
+/* The existing theme toggle pill */
 .theme-toggle {
   background: var(--primary);
   color: #fff;
