@@ -132,13 +132,7 @@ function App() {
         onCloseMobile={closeMobile}
       />
 
-      {/* Backdrop for mobile drawer */}
-      <div
-        className={`sidebar-backdrop ${mobileOpen ? 'show' : ''}`}
-        aria-hidden={!mobileOpen}
-        onClick={closeMobile}
-      />
-
+      {/* Main area is explicitly second in DOM to avoid any grid auto-placement quirks */}
       <div className="main-area">
         <Header
           title="EventEase"
@@ -200,6 +194,13 @@ function App() {
           <span>Ocean Professional Theme</span>
         </footer>
       </div>
+
+      {/* Backdrop for mobile drawer: fixed overlay on mobile, hidden on desktop */}
+      <div
+        className={`sidebar-backdrop ${mobileOpen ? 'show' : ''}`}
+        aria-hidden={!mobileOpen}
+        onClick={closeMobile}
+      />
 
       <Modal
         open={confirmState.open}
