@@ -1,4 +1,4 @@
-/* EventList: lists events with filters: status/date/search */
+/* EventList: lists events with filters: status/date/search + client-side sorting */
 import React, { useEffect, useMemo, useState } from 'react';
 
 function Empty({ onRefresh }) {
@@ -10,6 +10,19 @@ function Empty({ onRefresh }) {
       <button className="btn" onClick={onRefresh}>Refresh</button>
     </div>
   );
+}
+
+// Stable sort utility: sorts a copy and keeps original relative order for ties
+function stableSort(array, compareFn) {
+  return array
+    .map((item, index) => ({ item, index }))
+    .sort((a, b) => {
+      const res = compareFn(a.item, b.item);
+      if (res !== 0) return res;
+      // Stable tie-breaker on original index
+      return a.index - b.index;
+    })
+    .map(({ item }) => item);
 }
 
 // PUBLIC_INTERFACE
@@ -27,6 +40,10 @@ export default function EventList({
   const [localSearch, setLocalSearch] = useState(filters.search || '');
   const [localStatus, setLocalStatus] = useState(filters.status || '');
   const [localDate, setLocalDate] = useState(filters.date || '');
+  // Persist sort choice in component state
+  const [sortBy, setSortBy] = useState('date'); // 'title' | 'date'
+  // optional: expose as accessible label text
+  const sortLabel = sortBy === 'title' ? 'Title (A–Z)' : 'Start Date (Earliest)';
 
   useEffect(() => {
     setLocalSearch(filters.search || '');
@@ -55,6 +72,29 @@ export default function EventList({
     }
     return list;
   }, [events, localSearch, localStatus, localDate]);
+
+  // Derive sorted array from filtered list
+  const sorted = useMemo(() => {
+    const collator = new Intl.Collator(undefined, { sensitivity: 'base' });
+    if (sortBy === 'title') {
+      return stableSort([...filtered], (a, b) => {
+        const ta = (a.title || '').toString();
+        const tb = (b.title || '').toString();
+        return collator.compare(ta, tb);
+      });
+    }
+    // default: sort by start date earliest->latest; invalid dates to end
+    return stableSort([...filtered], (a, b) => {
+      const da = a?.start_time ? Date.parse(a.start_time) : NaN;
+      const db = b?.start_time ? Date.parse(b.start_time) : NaN;
+      const aValid = Number.isFinite(da);
+      const bValid = Number.isFinite(db);
+      if (aValid && bValid) return da - db;
+      if (aValid && !bValid) return -1; // valid before invalid
+      if (!aValid && bValid) return 1;
+      return 0; // both invalid -> keep original order
+    });
+  }, [filtered, sortBy]);
 
   const applyFilters = () => {
     setFilters({ search: localSearch, status: localStatus, date: localDate });
@@ -88,17 +128,31 @@ export default function EventList({
           />
           <button className="btn" onClick={applyFilters}>Apply</button>
           <button className="btn ghost" onClick={onRefresh}>Refresh</button>
+
+          {/* Sort control: accessible select, keyboard-friendly */}
+          <label className="visually-hidden" htmlFor="sort-select">Sort events</label>
+          <select
+            id="sort-select"
+            className="input"
+            aria-label="Sort events"
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            title={`Sort: ${sortLabel}`}
+          >
+            <option value="title">Title (A–Z)</option>
+            <option value="date">Start Date (Earliest)</option>
+          </select>
         </div>
       </div>
 
       {loading && <div className="notice">Loading events…</div>}
       {error && <div className="notice error">{String(error)}</div>}
 
-      {!loading && (!filtered || filtered.length === 0) ? (
+      {!loading && (!sorted || sorted.length === 0) ? (
         <Empty onRefresh={onRefresh} />
       ) : (
         <div className="list">
-          {filtered.map((e) => (
+          {sorted.map((e) => (
             <div className="list-item" key={e.id}>
               <div className="list-item-main">
                 <div className="badge-row">
