@@ -1,10 +1,26 @@
-const BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://vscode-internal-27850-beta.beta01.cloud.kavia.ai:3001';
+/**
+ * Resolve backend base URL from env with sensible local default.
+ * If REACT_APP_API_BASE_URL is not set, default to http://localhost:3001.
+ * This avoids hardcoding environment-specific hostnames.
+ */
+const BASE_URL =
+  (process.env.REACT_APP_API_BASE_URL && process.env.REACT_APP_API_BASE_URL.trim()) ||
+  'http://localhost:3001';
+
+/**
+ * Normalize URL joining to avoid accidental double slashes.
+ */
+function joinUrl(base, path) {
+  const b = base.replace(/\/+$/, '');
+  const p = path.startsWith('/') ? path : `/${path}`;
+  return `${b}${p}`;
+}
 
 /**
  * Thin fetch wrapper providing JSON handling and error normalization
  */
 async function request(path, { method = 'GET', body, headers } = {}) {
-  const url = `${BASE_URL}${path}`;
+  const url = joinUrl(BASE_URL, path);
   const opts = {
     method,
     headers: {
@@ -28,8 +44,11 @@ async function request(path, { method = 'GET', body, headers } = {}) {
     }
     return data;
   } catch (err) {
-    // Normalize error
-    return Promise.reject(err instanceof Error ? err : new Error('Network error'));
+    // Normalize error with base URL hint for easier troubleshooting
+    const baseHint = ` (base: ${BASE_URL})`;
+    const message =
+      (err instanceof Error ? err.message : 'Network error') + baseHint;
+    return Promise.reject(new Error(message));
   }
 }
 
@@ -52,6 +71,9 @@ export const EventsAPI = {
   update: (id, payload) => request(`/events/${id}`, { method: 'PUT', body: payload }),
   /** Delete an event */
   remove: (id) => request(`/events/${id}`, { method: 'DELETE' }),
+  // PUBLIC_INTERFACE
+  /** Simple health check to verify backend connectivity from the app */
+  health: () => request('/health', { method: 'GET' }),
 };
 
 export default EventsAPI;

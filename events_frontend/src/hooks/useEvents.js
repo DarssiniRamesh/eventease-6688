@@ -23,7 +23,7 @@ export default function useEvents() {
       const data = await EventsAPI.list(params).catch((e) => {
         // Gracefully handle missing backend
         throw new Error(
-          `Unable to load events. Ensure backend is running at REACT_APP_API_BASE_URL. ${e?.message || ''}`
+          `Unable to load events. Ensure backend is running and CORS allows http://localhost:3000. ${e?.message || ''}`
         );
       });
       setEvents(Array.isArray(data) ? data : data?.items || []);
