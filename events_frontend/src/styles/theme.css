@@ -54,6 +54,12 @@
   grid-template-columns: var(--sidebar-w-collapsed) 1fr;
 }
 
+/* Ensure the main content column sits above any overlays by default */
+.main-area {
+  position: relative;
+  z-index: 1;
+}
+
 .sidebar {
   position: sticky;
   top: 0;
@@ -118,6 +124,13 @@
   .sidebar-backdrop.show {
     opacity: 1;
     pointer-events: auto;
+  }
+}
+
+/* On desktop, ensure the backdrop never intercepts clicks or covers content */
+@media (min-width: calc(var(--bp-md) + 1px)) {
+  .sidebar-backdrop {
+    display: none;
   }
 }
 
@@ -250,6 +263,7 @@
   padding: 22px;
   max-width: 1200px;
   width: 100%;
+  min-height: 0; /* allow grid child to shrink properly */
 }
 
 /* Footer */

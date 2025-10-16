@@ -7,6 +7,12 @@
 html, body, #root { height: 100%; }
 body { margin: 0; }
 
+/* Ensure the root app container fills viewport and children can stretch */
+#root {
+  display: block;
+  min-height: 100vh;
+}
+
 /* Generic focus-visible ring */
 :where(button, a, input, select, textarea).focus-visible,
 :where(button, a, input, select, textarea):focus-visible {
