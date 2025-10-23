@@ -45,9 +45,11 @@ async function request(path, { method = 'GET', body, headers } = {}) {
     return data;
   } catch (err) {
     // Normalize error with base URL hint for easier troubleshooting
-    const baseHint = ` (base: ${BASE_URL})`;
+    const baseHint = ` [${method} ${path}] (base: ${BASE_URL})`;
     const message =
-      (err instanceof Error ? err.message : 'Network error') + baseHint;
+      (err instanceof Error ? err.message : 'Network error') +
+      baseHint +
+      ' — If this is a browser CORS error, ensure the backend allows your frontend origin and the base URL is correct.';
     return Promise.reject(new Error(message));
   }
 }

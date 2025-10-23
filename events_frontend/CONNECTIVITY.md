@@ -8,6 +8,7 @@ Configuration:
 - PUBLIC_INTERFACE
 - Environment variable: REACT_APP_API_BASE_URL
   - Example local dev: REACT_APP_API_BASE_URL=http://localhost:3001
+  - Cloud preview: set to your backend preview base, e.g. https://vscode-internal-16028-beta.beta01.cloud.kavia.ai:3001
   - If not set, the app defaults to http://localhost:3001.
 
 CORS:
