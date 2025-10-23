@@ -2,6 +2,7 @@
  * Resolve backend base URL from env with sensible local default.
  * If REACT_APP_API_BASE_URL is not set, default to http://localhost:3001.
  * This avoids hardcoding environment-specific hostnames.
+ * Note: value sourced from events_frontend/.env during build/runtime in CRA.
  */
 const BASE_URL =
   (process.env.REACT_APP_API_BASE_URL && process.env.REACT_APP_API_BASE_URL.trim()) ||
