@@ -89,6 +89,9 @@ export default function EventList({
           <button className="btn" onClick={applyFilters}>Apply</button>
           <button className="btn ghost" onClick={onRefresh}>Refresh</button>
           <a className="btn ghost" href={(process.env.REACT_APP_API_BASE_URL || 'http://localhost:3001') + '/health'} target="_blank" rel="noreferrer">Open Health</a>
+          {String(process.env.REACT_APP_USE_MOCK || '').toLowerCase() === 'true' && (
+            <span className="badge" title="Using local mock data">Mock Mode</span>
+          )}
         </div>
       </div>
 

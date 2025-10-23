@@ -27,6 +27,20 @@ Launches the test runner in interactive watch mode.
 Builds the app for production to the `build` folder.\
 It correctly bundles React in production mode and optimizes the build for the best performance.
 
+## Mock Mode (No Backend Required)
+
+The app can run fully offline against a mock Events API backed by `localStorage`.
+
+- Copy `.env.example` to `.env`.
+- Set `REACT_APP_USE_MOCK=true` to enable mock mode.
+- Optionally set `REACT_APP_API_BASE_URL` for non-mock mode (defaults to `http://localhost:3001`).
+
+When mock mode is active:
+- All list/create/edit/delete operations are handled in the browser and persisted in `localStorage`.
+- A simulated health endpoint is provided by the mock layer.
+
+To switch back to real backend mode, set `REACT_APP_USE_MOCK=false` and ensure your backend is running and CORS is configured (see CONNECTIVITY.md).
+
 ## Customization
 
 ### Colors

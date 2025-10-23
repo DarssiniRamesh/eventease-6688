@@ -8,6 +8,16 @@ const BASE_URL =
   (process.env.REACT_APP_API_BASE_URL && process.env.REACT_APP_API_BASE_URL.trim()) ||
   'http://localhost:3001';
 
+// Toggle to use mock layer instead of network requests
+const USE_MOCK = String(process.env.REACT_APP_USE_MOCK || '').toLowerCase() === 'true';
+
+// Lazy import to avoid bundling mock unless enabled (but CRA inlines env at build time)
+let MockAPIRef = null;
+if (USE_MOCK) {
+  // eslint-disable-next-line global-require
+  MockAPIRef = require('./mockData').MockEventsAPI;
+}
+
 /**
  * Normalize URL joining to avoid accidental double slashes.
  */
@@ -56,27 +66,42 @@ async function request(path, { method = 'GET', body, headers } = {}) {
 }
 
 // PUBLIC_INTERFACE
-export const EventsAPI = {
-  /** Get list of events with optional query params */
-  list: async (params = {}) => {
-    const qp = new URLSearchParams();
-    Object.entries(params).forEach(([k, v]) => {
-      if (v !== undefined && v !== null && v !== '') qp.append(k, v);
-    });
-    const q = qp.toString();
-    return request(`/events${q ? `?${q}` : ''}`, { method: 'GET' });
-  },
-  /** Get an event by ID */
-  get: (id) => request(`/events/${id}`, { method: 'GET' }),
-  /** Create a new event */
-  create: (payload) => request('/events', { method: 'POST', body: payload }),
-  /** Update an existing event */
-  update: (id, payload) => request(`/events/${id}`, { method: 'PUT', body: payload }),
-  /** Delete an event */
-  remove: (id) => request(`/events/${id}`, { method: 'DELETE' }),
-  // PUBLIC_INTERFACE
-  /** Simple health check to verify backend connectivity from the app */
-  health: () => request('/health', { method: 'GET' }),
-};
+export const EventsAPI = USE_MOCK && MockAPIRef
+  ? {
+      /** Get list of events with optional query params */
+      list: (params = {}) => MockAPIRef.list(params),
+      /** Get an event by ID */
+      get: (id) => MockAPIRef.get(id),
+      /** Create a new event */
+      create: (payload) => MockAPIRef.create(payload),
+      /** Update an existing event */
+      update: (id, payload) => MockAPIRef.update(id, payload),
+      /** Delete an event */
+      remove: (id) => MockAPIRef.remove(id),
+      /** Simple health check */
+      health: () => MockAPIRef.health(),
+    }
+  : {
+      /** Get list of events with optional query params */
+      list: async (params = {}) => {
+        const qp = new URLSearchParams();
+        Object.entries(params).forEach(([k, v]) => {
+          if (v !== undefined && v !== null && v !== '') qp.append(k, v);
+        });
+        const q = qp.toString();
+        return request(`/events${q ? `?${q}` : ''}`, { method: 'GET' });
+      },
+      /** Get an event by ID */
+      get: (id) => request(`/events/${id}`, { method: 'GET' }),
+      /** Create a new event */
+      create: (payload) => request('/events', { method: 'POST', body: payload }),
+      /** Update an existing event */
+      update: (id, payload) => request(`/events/${id}`, { method: 'PUT', body: payload }),
+      /** Delete an event */
+      remove: (id) => request(`/events/${id}`, { method: 'DELETE' }),
+      // PUBLIC_INTERFACE
+      /** Simple health check to verify backend connectivity from the app */
+      health: () => request('/health', { method: 'GET' }),
+    };
 
 export default EventsAPI;
